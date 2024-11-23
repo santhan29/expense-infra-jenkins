@@ -12,8 +12,10 @@ pipeline {
     stages {
         stage('Init') { 
             steps { 
-                sh 'cd 00-VPC'  
-                sh 'terraform init -reconfigure'  
+                sh """
+                    cd 00-VPC  
+                    terraform init -reconfigure
+                """
             }
         }
         stage('Plan') { 
