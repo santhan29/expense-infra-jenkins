@@ -42,9 +42,11 @@ pipeline {
                 }
             }
         } 
-        // stage('Trigger SG') {
-        //     build job: '10-SG', parameters: [[$class: 'choiceParameterValue', name: 'ACTION', value: 'apply' ]]
-        // }
+        stage('Trigger SG') {
+            steps{
+                build job: '10-SG', parameters: [[$class: 'choiceParameterValue', name: 'ACTION', value: 'apply' ]] 
+            } 
+        }
     } 
     post{
         always{
