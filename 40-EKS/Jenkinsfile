@@ -14,7 +14,7 @@ pipeline {
             steps { 
                 withAWS(region: 'us-east-1', credentials: 'aws-credentials') {
                     sh """
-                        cd 10-SG
+                        cd 40-EKS
                         terraform init -reconfigure
                         terraform plan -out=tfplan
                   
@@ -30,7 +30,7 @@ pipeline {
             steps {
                 withAWS(region: 'us-east-1', credentials: 'aws-credentials') {
                     sh """
-                        cd 10-SG
+                        cd 40-EKS 
                         if [ ${params.ACTION} == 'apply' ]
                         then 
                             terraform apply -auto-approve tfplan
@@ -39,31 +39,6 @@ pipeline {
                             terraform destroy -auto-approve 
                         fi 
                     """
-                }
-            }
-        }
-        stage('Destroy VPC') {
-            when {
-                expression { params.ACTION == 'destroy'} 
-            }
-            steps{
-                build job: '00-VPC', parameters: [string(name: 'ACTION', value: "destroy")], wait: false
-            } 
-        }
-        stage('Parallel in sequence') { 
-            when {
-                expression { params.ACTION == 'apply'}  
-            }
-            parallel {
-                stage('Bastion') {
-                    steps {
-                        build job: '20-BASTION', parameters: [string(name: 'ACTION', value: "apply")], wait: false 
-                    } 
-                }
-                stage('Eks') {
-                    steps {
-                        build job: '40-EKS', parameters: [string(name: 'ACTION', value: "apply")], wait: false
-                    }
                 }
             }
         } 
