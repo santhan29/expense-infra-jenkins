@@ -56,14 +56,47 @@ pipeline {
                         build job: '20-BASTION', parameters: [string(name: 'ACTION', value: "apply")], wait: false 
                     } 
                 }
+                stage('RDS') {
+                    steps {
+                        build job: '30-RDS', parameters: [string(name: 'ACTION', value: "apply")], wait: false
+                    }
+                }
                 stage('Eks') {
                     steps {
                         build job: '40-EKS', parameters: [string(name: 'ACTION', value: "apply")], wait: false
                     }
                 }
+                stage('ECR') {
+                    steps {
+                        build job: '70-ECR', parameters: [string(name: 'ACTION', value: "apply")], wait: false
+                    }
+                }
             }
         } 
-    } 
+        stage('Sequential') {
+            when {
+                expression { params.ACTION == 'apply' }
+            }
+            stages {
+                stage('ACM') {
+                    steps {
+                        build job: '50-ACM', parameters: [string(name: 'ACTION', value: "apply")]
+                    }
+                }
+                stage('ALB') {
+                    steps {
+                        build job: '60-ALB', parameters: [string(name: 'ACTION', value: "apply")], wait: false
+                    }
+                }
+                stage('CDN') {
+                    steps {
+                        build job: '80-CDN', parameters: [string(name: 'ACTION', value: "apply")], wait: false
+                    }
+                }
+            }
+                
+        }
+    }
     post{
         always{
             echo "this section runs always" 

@@ -1,0 +1,73 @@
+pipeline {
+    agent {
+        label 'AGENT-1'
+    }
+    options{
+        timeout(time: 30, unit: 'MINUTES')
+        disableConcurrentBuilds()
+    }
+    parameters {
+        choice(name: 'ACTION', choices: ['apply', 'destroy'], description: 'Select Action')
+    }
+    stages {
+        stage('Init and Plan') {
+            steps {
+                withAWS(region: 'us-east-1', credentials: 'aws-credentials') {
+                    sh """
+                        cd 80-CDN
+                        terraform init -reconfigure
+                        terraform plan -out=tfplan
+                    """
+                }
+            }
+        }
+
+        stage('Apply or Destroy') {
+            steps {
+                withAWS(region: 'us-east-1', credentials: 'aws-credentials') {
+                    sh """
+                        cd 80-CDN
+                        if [ ${params.ACTION} == 'apply' ]
+                        then
+                            terraform apply -auto-approve tfplan
+                        fi
+                    """
+                }
+            }
+        }
+
+        stage('Destroy'){
+            when {
+                expression { params.ACTION == 'destroy' }
+            }
+            steps{
+                withAWS(region: 'us-east-1', credentials: 'aws-credentials') {
+                    script {
+                        def directories = ['80-CDN', '70-ECR', '60-ALB', '50-ACM', '40-EKS', '30-RDS', '20-BASTION', '10-SG', '00-VPC']
+                        for (dir in directories) {
+                            echo "Destroying resources in directory: ${dir}"
+                            sh """
+                            cd ${dir}
+                            terraform init -reconfigure
+                            terraform destroy -auto-approve || { echo "Failed to destroy resources in ${dir}"; exit 1; }
+                            cd ..
+                            """
+                        }
+                    }
+                }
+            }
+        }
+    }
+    post {
+        always{
+            echo "This sections runs always"
+            deleteDir()
+        }
+        success{
+            echo "This section run when pipeline success"
+        }
+        failure{
+            echo "This section run when pipeline failure"
+        }
+    }
+}
