@@ -8,7 +8,7 @@ module "db" {
   instance_class    = "db.t3.micro" 
   allocated_storage = 5
 
-  db_name  = "transsactions" #schema 
+  db_name  = "transactions" #schema 
   username = "root"
   manage_master_user_password = false 
   password = "ExpenseApp1" 
