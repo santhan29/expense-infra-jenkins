@@ -84,7 +84,7 @@ resource "aws_lb_target_group" "expense" {
     matcher = "200-299"
     path = "/" 
     protocol = "HTTP"
-    port = 80
+    port = 8080 
     timeout = 4 
   }
 } 
